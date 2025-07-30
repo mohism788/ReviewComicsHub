@@ -1,0 +1,72 @@
+﻿using System.Reflection.Metadata.Ecma335;
+using IssuesAPI.DataAccess;
+using IssuesAPI.DTOs.ReviewsDTOs;
+using IssuesAPI.Models;
+using Microsoft.EntityFrameworkCore;
+using IssuesAPI.Mapper.ReviewsMapper;
+
+namespace IssuesAPI.Repositories
+{
+    public class ReviewRepository : IReviewRepository
+    {
+        private readonly ApplicationDbContext _dbContext;
+        private readonly ILogger _logger;
+
+        public ReviewRepository(ApplicationDbContext dbContext, ILogger logger)
+        {
+           
+            _dbContext = dbContext;
+            _logger = logger;
+        }
+        public async Task<IEnumerable<ReviewWithIssueTitleDto>> GetAllReviewsAsync(int issueId)
+        {
+            //return list of reviews when found linked with this issueId
+            
+            var reviews = await _dbContext.Reviews
+                .Where(x => x.IssueId == issueId)
+                .ToListAsync();
+
+            //get the issue title this these reviews are linked to
+            var issueTitle = await _dbContext.Issues
+                .Where(x => x.Id == issueId)
+                .Select(x => x.IssueTitle)
+                .FirstOrDefaultAsync();
+
+            ////map the reviews to ReviewWithIssueTitleDto using Mapper
+            var reviewsDto = ReviewsMapper.MapToDtoReviewWithIssueTitle(reviews,issueTitle);
+
+            // Log the number of reviews found
+            _logger.LogInformation($"Found {reviewsDto.Count()} reviews for issue with ID {issueId}.");
+
+            if (reviewsDto == null || !reviewsDto.Any())
+            {
+                throw new Exception("No reviews found for this issue");
+            }
+            return reviewsDto;
+        }
+
+        public async Task<Review> UpdateReviewAsync(int reviewId, UpdatedReviewDto updatedReviewDto)
+        {
+            //use the UpdatedReviewDto
+            var review = await _dbContext.Reviews.FirstOrDefaultAsync(x => x.Id == reviewId);
+            if (review == null)
+            {
+                throw new Exception($"Review with ID {reviewId} not found.");
+            }
+            //update the comment and/or rating
+            if (updatedReviewDto.Comment != null)
+            {
+                review.Comment = updatedReviewDto.Comment;
+            }
+            if (updatedReviewDto.Rating.HasValue)
+            {
+                review.Rating = updatedReviewDto.Rating.Value;
+            }
+            _dbContext.Reviews.Update(review);
+            await _dbContext.SaveChangesAsync();
+            // Log the successful update
+            _logger.LogInformation($"Review with ID {reviewId} updated successfully.");
+            return review;
+        }
+    }
+}
