@@ -54,5 +54,58 @@ namespace IssuesAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpDelete]
+        [Route("{reviewId:int}")]
+        public async Task<IActionResult> DeleteReviewById([FromRoute] int reviewId)
+        {
+            var ToDelete = await _reviewRepo.DeleteReviewByIdAsync(reviewId);
+            if (ToDelete)
+            {
+                return Ok($"Review with ID {reviewId} deleted successfully.");
+            }
+            return NotFound($"Review with ID {reviewId} not found.");
+           
+        }
+
+
+        [HttpDelete]
+        [Route("issue/{issueId:int}")]
+        public async Task<IActionResult> DeleteAllReviewsByIssueId([FromRoute] int issueId)
+        {
+            try
+            {
+                var deleted = await _reviewRepo.DeleteAllReviewsByIssueIdAsync(issueId);
+                if (deleted)
+                {
+                    return Ok($"All reviews for issue with ID {issueId} deleted successfully.");
+                }
+                return NotFound($"No reviews found for issue with ID {issueId}.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto createReviewDto)
+        {
+            if (createReviewDto == null)
+            {
+                return BadRequest("Invalid review data.");
+            }
+            try
+            {
+                var createdReview = await _reviewRepo.CreateReviewAsync(createReviewDto);
+                return CreatedAtAction(nameof(GetAllReviews), new { issueId = createdReview.IssueId }, createdReview);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
     }
 }

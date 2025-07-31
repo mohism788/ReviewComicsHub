@@ -25,7 +25,23 @@ namespace IssuesAPI.Mapper.ReviewsMapper
         }
 
 
+        //map CreateReviewDto to Review
+        public static Review MapToReviewFromCreate(CreateReviewDto createReviewDto)
+        {
+            if (createReviewDto == null)
+            {
+                throw new ArgumentNullException(nameof(createReviewDto), "CreateReviewDto cannot be null");
+            }
+            return new Review
+            {
 
+                IssueId = createReviewDto.IssueId,
+                Rating = createReviewDto.Rating,
+                Comment = createReviewDto.Comment,
+                ReviewerName = createReviewDto.ReviewerName,
+                Date = DateTime.UtcNow // Set the date to the current UTC time
+            };
+        }
 
     }
 }

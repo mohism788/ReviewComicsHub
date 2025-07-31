@@ -52,5 +52,23 @@ namespace IssuesAPI.Mapper.IssuesMapper
                 IssueNumber = updateIssueNameOrNumberDto.IssueNumber ?? 0
             };
         }
+
+
+        // // Map CreateIssueDto to Issue
+        public static Issue MapToIssueFromCreate(CreateIssueDto createIssueDto)
+        {
+            if (createIssueDto == null)
+            {
+                throw new ArgumentNullException(nameof(createIssueDto), "CreateIssueDto cannot be null");
+            }
+            return new Issue
+            {
+                ComicId = createIssueDto.ComicId,
+                IssueNumber = createIssueDto.IssueNumber,
+                IssueTitle = createIssueDto.IssueTitle
+            };
+
+
+        }
     }
 }

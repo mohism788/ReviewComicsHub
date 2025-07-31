@@ -7,7 +7,14 @@ namespace IssuesAPI.Repositories
     {
         //Get all reviews for a specific issue
         Task<IEnumerable<ReviewWithIssueTitleDto>> GetAllReviewsAsync(int issueId);
-        //update review comment and/or rating
         Task<Review> UpdateReviewAsync(int reviewId,UpdatedReviewDto updatedReviewDto);
+
+        Task<bool> DeleteReviewByIdAsync(int reviewId);
+
+        //delete all reviews linked with this issueId
+        Task<bool> DeleteAllReviewsByIssueIdAsync(int issueId);
+
+        Task<CreateReviewDto> CreateReviewAsync(CreateReviewDto Createdreview);
+
     }
 }

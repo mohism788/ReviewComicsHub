@@ -14,6 +14,27 @@ namespace ComicsAPI.Repositories
             _httpClient = httpClient;
             _logger = logger;
         }
+
+        public async Task<bool> DeleteAllIssuesByComicIdAsync(int comicId)
+        {
+            
+                var payload = new { comicId };
+                var client = _httpClient.CreateClient("IssuesApi");
+                var response = await client.DeleteAsync($"https://localhost:7194/api/Issues/comic/{comicId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                //log failed or no issues found
+                _logger.LogWarning($"Failed to delete issues for comic ID {comicId}: {response.ReasonPhrase}");
+                return false;
+
+
+            }
+                // Log the response status code
+                _logger.LogInformation($"Response from Issues API for comic ID {comicId}: {response.StatusCode}");
+                return response.IsSuccessStatusCode;
+
+        }
+
         public async Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId)
         {
             var payload = comicId;

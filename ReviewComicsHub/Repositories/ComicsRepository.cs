@@ -17,6 +17,40 @@ namespace ComicsAPI.Repositories
             _issuesApiRepo = issuesApiRepository;
             _logger = logger;
         }
+
+        public Task<Comics> CreateComicAsync(Comics comic)
+        {
+            if (comic == null)
+            {
+                throw new ArgumentNullException(nameof(comic), "Comic cannot be null.");
+            }
+            _dbContext.Comics.Add(comic);
+            _dbContext.SaveChanges();
+            _logger.LogInformation($"Successfully created comic with ID {comic.ComicId} and title '{comic.Title}'.");
+            return Task.FromResult(comic);
+
+        }
+
+        public async Task<bool> DeleteComicByIdAsync(int comicId)
+        {
+           var comicToDelete = await _dbContext.Comics.FirstOrDefaultAsync(x=> x.ComicId == comicId);
+            if (comicToDelete == null)
+            {
+                return false;
+            }
+            // Delete all issues associated with this comic
+            var issuesDeleted = await _issuesApiRepo.DeleteAllIssuesByComicIdAsync(comicId);
+            if (!issuesDeleted)
+            {
+                _logger.LogWarning($"No issues found for comic with ID {comicId}. Proceeding to delete the comic without issues.");
+            }
+            // Delete the comic
+            _dbContext.Comics.Remove(comicToDelete);
+            await _dbContext.SaveChangesAsync();
+            _logger.LogInformation($"Successfully deleted comic with ID {comicId} and its associated issues.");
+            return true;
+        }
+
         public async Task<IEnumerable<Comics>> GetAllComicsAsync()
         {
             // Log the start of the method execution

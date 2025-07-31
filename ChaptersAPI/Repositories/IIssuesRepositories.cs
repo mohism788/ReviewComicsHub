@@ -8,5 +8,11 @@ namespace IssuesAPI.Repositories
         Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId);
         Task<IssueDto> UpdateIssueAsync(int issueId, UpdateIssueNameOrNumberDto updateIssueNameOrNumberDto);
 
+        Task<bool> DeleteIssueByIdAsync(int issueId);
+
+        //delete all issues linked with this comicId
+        Task<bool> DeleteAllIssuesByComicIdAsync(int comicId);
+
+        Task<CreateIssueDto> CreateIssueAsync(CreateIssueDto createIssueDto);
     }
 }

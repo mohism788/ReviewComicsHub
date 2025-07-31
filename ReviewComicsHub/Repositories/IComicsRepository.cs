@@ -6,13 +6,12 @@ namespace ComicsAPI.Repositories
     public interface IComicsRepository
     {
         Task<IEnumerable<Comics>> GetAllComicsAsync();
-        // Task<Comics> GetComicIssuesByIdAsync(int comicId);
-
         Task<ComicWithIssuesDto> GetComicIssuesAsync(int comicId);
-
-        //update title only
+        Task<Comics> CreateComicAsync(Comics comic);
         Task<Comics> UpdateComicTitleAsync(int comicId, string newTitle);
+        Task<bool> DeleteComicByIdAsync(int comicId);
 
-        
+
+
     }
 }

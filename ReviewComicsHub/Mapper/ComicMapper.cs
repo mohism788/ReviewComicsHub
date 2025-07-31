@@ -36,5 +36,20 @@ namespace ComicsAPI.Mapper
                 Issues = issues
             };
         }
+
+        //MapFromCreateDtoToDomain
+        public static Comics MapFromCreateDtoToDomain(CreateNewComicDto createNewComicDto)
+        {
+            if (createNewComicDto == null)
+            {
+                return null;
+            }
+            return new Comics
+            {
+                Title = createNewComicDto.Title,
+                Description = createNewComicDto.Description,
+                CoverImageUrl = createNewComicDto.CoverImageUrl
+            };
+        }
     }
 }

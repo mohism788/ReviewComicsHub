@@ -18,6 +18,64 @@ namespace IssuesAPI.Repositories
             _dbContext = dbContext;
             _logger = logger;
         }
+
+        public async Task<CreateReviewDto> CreateReviewAsync(CreateReviewDto Createdreview)
+        {
+            //create a new review using the CreateReviewDto
+            var review = ReviewsMapper.MapToReviewFromCreate(Createdreview);
+            await _dbContext.Reviews.AddAsync(review);
+            await _dbContext.SaveChangesAsync();
+            // Log the successful creation
+            _logger.LogInformation($"Review for issue with ID {review.IssueId} created successfully.");
+            return Createdreview;
+
+        }
+
+        public async Task<bool> DeleteAllReviewsByIssueIdAsync(int issueId)
+        {
+            try
+            {
+                var reviewsToDelete = await _dbContext.Reviews.Where(x => x.IssueId == issueId).ToListAsync();
+                if (reviewsToDelete == null || !reviewsToDelete.Any())
+                {
+                    throw new Exception($"No reviews found for issue with ID {issueId}.");
+                }
+                _dbContext.Reviews.RemoveRange(reviewsToDelete);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+                throw;
+            }
+
+        }
+
+        public async Task<bool> DeleteReviewByIdAsync(int reviewId)
+        {
+            try
+            {
+                var exist = await _dbContext.Reviews.FirstOrDefaultAsync(x => x.Id == reviewId);
+                if (exist == null)
+                {
+                    throw new Exception($"Review with ID {reviewId} not found.");
+                }
+                _dbContext.Reviews.Remove(exist);
+                await _dbContext.SaveChangesAsync();
+                // Log the successful deletion
+                _logger.LogInformation($"Review with ID {reviewId} deleted successfully.");
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+                throw;
+                
+            }
+
+        }
+
         public async Task<IEnumerable<ReviewWithIssueTitleDto>> GetAllReviewsAsync(int issueId)
         {
             //return list of reviews when found linked with this issueId
