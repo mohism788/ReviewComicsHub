@@ -1,6 +1,7 @@
 ﻿using ComicsAPI.DTOs;
 using ComicsAPI.Mapper;
 using ComicsAPI.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ namespace ComicsAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllComics()
         {
             var ComicsDomain = await _comicsRepo.GetAllComicsAsync();
@@ -28,6 +30,7 @@ namespace ComicsAPI.Controllers
         }
 
         [HttpGet("{comicId}")]
+        [Authorize]
         public async Task<IActionResult> GetComicIssues(int comicId)
         {
             try
@@ -41,11 +44,12 @@ namespace ComicsAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Comic not found");
             }
         }
 
         [HttpPut("{comicId}")]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> ChangeComicTitle([FromRoute] int comicId, [FromBody] string newName)
         {
             var updatedComicDomain = await _comicsRepo.UpdateComicTitleAsync(comicId, newName);
@@ -59,6 +63,7 @@ namespace ComicsAPI.Controllers
 
         [HttpDelete]
         [Route("{comidId}")]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> DeleteComicById([FromRoute] int comidId)
         {
             try
@@ -77,6 +82,7 @@ namespace ComicsAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> CreateComic([FromBody] CreateNewComicDto createNewComicDto)
         {
             if (createNewComicDto == null)

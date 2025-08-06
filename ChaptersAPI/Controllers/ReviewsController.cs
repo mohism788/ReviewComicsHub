@@ -1,5 +1,6 @@
 ﻿using IssuesAPI.DTOs.ReviewsDTOs;
 using IssuesAPI.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,9 +17,10 @@ namespace IssuesAPI.Controllers
             _reviewRepo = reviewRepo;
         }
 
+        [Authorize]
         [HttpGet]
-        //route for getting reviews by issueId
         [Route("{issueId:int}")]
+        
         public async Task<IActionResult> GetAllReviews([FromRoute]int issueId)
         {
             try
@@ -37,6 +39,7 @@ namespace IssuesAPI.Controllers
         }
 
 
+        [Authorize(Roles = "Moderator")]
         [HttpPut("{reviewId:int}")]
         public async Task<IActionResult> UpdateReview([FromRoute] int reviewId, [FromBody] UpdatedReviewDto updatedReviewDto)
         {
@@ -55,6 +58,8 @@ namespace IssuesAPI.Controllers
             }
         }
 
+
+        [Authorize(Roles = "Moderator")]
         [HttpDelete]
         [Route("{reviewId:int}")]
         public async Task<IActionResult> DeleteReviewById([FromRoute] int reviewId)
@@ -69,6 +74,7 @@ namespace IssuesAPI.Controllers
         }
 
 
+        [Authorize(Roles = "Moderator")]
         [HttpDelete]
         [Route("issue/{issueId:int}")]
         public async Task<IActionResult> DeleteAllReviewsByIssueId([FromRoute] int issueId)
@@ -88,6 +94,8 @@ namespace IssuesAPI.Controllers
             }
         }
 
+
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto createReviewDto)
         {

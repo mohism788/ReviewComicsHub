@@ -1,5 +1,6 @@
 ﻿using IssuesAPI.DTOs.IssuesDTOs;
 using IssuesAPI.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ namespace ChaptersAPI.Controllers
         }
 
         [HttpGet("{comicId}")]
+        [Authorize]
         public async Task<IActionResult> GetAllIssues(int comicId)
         {
             try
@@ -38,6 +40,7 @@ namespace ChaptersAPI.Controllers
 
         [HttpPut]
         [Route("{issueId}")]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> UpdateIssue([FromRoute] int issueId, [FromBody] UpdateIssueNameOrNumberDto updateIssueNameOrNumberDto)
         {
             try
@@ -56,6 +59,7 @@ namespace ChaptersAPI.Controllers
         }
 
         [HttpDelete("{issueId}")]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> DeleteIssueById([FromRoute] int issueId)
         {
             try
@@ -75,6 +79,7 @@ namespace ChaptersAPI.Controllers
 
         [HttpDelete]
         [Route("comic/{comicId}")]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> DeleteAllIssuesByComicId([FromRoute] int comicId)
         {
             try
@@ -93,6 +98,8 @@ namespace ChaptersAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Moderator")]
+
         public async Task<IActionResult> CreateNewIssue([FromBody] CreateIssueDto createIssueDto)
         {
             try

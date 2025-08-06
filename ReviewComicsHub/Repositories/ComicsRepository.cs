@@ -18,16 +18,17 @@ namespace ComicsAPI.Repositories
             _logger = logger;
         }
 
-        public Task<Comics> CreateComicAsync(Comics comic)
+        public async Task<Comics> CreateComicAsync(Comics comic)
         {
+
             if (comic == null)
             {
                 throw new ArgumentNullException(nameof(comic), "Comic cannot be null.");
             }
-            _dbContext.Comics.Add(comic);
-            _dbContext.SaveChanges();
+            await _dbContext.Comics.AddAsync(comic);
+            await _dbContext.SaveChangesAsync();
             _logger.LogInformation($"Successfully created comic with ID {comic.ComicId} and title '{comic.Title}'.");
-            return Task.FromResult(comic);
+            return comic;
 
         }
 
@@ -97,5 +98,8 @@ namespace ComicsAPI.Repositories
             _logger.LogInformation($"Successfully updated title for comic with ID {comicId} to '{newTitle}'.");
             return exist;
         }
+
     }
+
+
 }

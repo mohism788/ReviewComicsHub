@@ -1,4 +1,5 @@
-﻿using ChaptersAPI.Models;
+﻿using System.Security.Claims;
+using ChaptersAPI.Models;
 using IssuesAPI.DataAccess;
 using IssuesAPI.DTOs.IssuesDTOs;
 using IssuesAPI.DTOs.ReviewsDTOs;
@@ -14,17 +15,24 @@ namespace IssuesAPI.Repositories
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public IssuesRepositories(ApplicationDbContext dbContext, ILogger logger)
+        public IssuesRepositories(ApplicationDbContext dbContext, ILogger logger, IHttpContextAccessor  httpContextAccessor)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<CreateIssueDto> CreateIssueAsync(CreateIssueDto createIssueDto)
         {
            if (createIssueDto != null)
             {
+                var user = _httpContextAccessor.HttpContext?.User;
+                var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
                 var issue = IssuesMapper.MapToIssueFromCreate(createIssueDto);
                 await _dbContext.Issues.AddAsync(issue);
                 await _dbContext.SaveChangesAsync();
@@ -40,6 +48,11 @@ namespace IssuesAPI.Repositories
         {
             try
             {
+                var user = _httpContextAccessor.HttpContext?.User;
+                var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
                 var ToBeDeletedIssues = await _dbContext.Issues.Where(x => x.ComicId == comicId).ToListAsync();
                 if (ToBeDeletedIssues == null || !ToBeDeletedIssues.Any())
                 {
@@ -70,7 +83,12 @@ namespace IssuesAPI.Repositories
 
         public async Task<bool> DeleteIssueByIdAsync(int issueId)
         {
-           var ToBeDeleted = await _dbContext.Issues.Where(x => x.Id == issueId).FirstOrDefaultAsync();
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+            var ToBeDeleted = await _dbContext.Issues.Where(x => x.Id == issueId).FirstOrDefaultAsync();
             if (ToBeDeleted == null)
             {
                 throw new Exception("Issue not found");
@@ -91,6 +109,11 @@ namespace IssuesAPI.Repositories
 
         public async Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId)
         {
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
             var exist = await _dbContext.Issues.FirstOrDefaultAsync(x => x.ComicId == comicId);
             if (exist == null)
             {
@@ -115,6 +138,11 @@ namespace IssuesAPI.Repositories
 
         public async Task<IssueDto> UpdateIssueAsync(int issueId, UpdateIssueNameOrNumberDto updateIssueNameOrNumberDto)
         {
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
             var exist = _dbContext.Issues.FirstOrDefault(x => x.Id == issueId);
             if (exist == null)
             {

@@ -10,6 +10,7 @@ namespace ComicsAPI.DataAccess
         {
         }
         public DbSet<Comics> Comics { get; set; }
+        public DbSet<Image> Images { get; set; }
         //assign ComicId as the primary key for the Comics table
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
