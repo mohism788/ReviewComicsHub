@@ -1,5 +1,6 @@
 using System.Text;
 using IssuesAPI.DataAccess;
+using IssuesAPI.Helpers;
 using IssuesAPI.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -53,7 +54,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IIssuesRepositories, IssuesRepositories>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<ILogger, Logger<IssuesRepositories>>();
-builder.Services.AddScoped<ILogger, Logger<ReviewRepository>>();
+builder.Services.AddScoped<JwtReceiver>();
 
 //AUTHENTICATION
 

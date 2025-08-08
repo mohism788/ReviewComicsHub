@@ -5,6 +5,7 @@ using IssuesAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using IssuesAPI.Mapper.ReviewsMapper;
 using System.Security.Claims;
+using IssuesAPI.Helpers;
 
 namespace IssuesAPI.Repositories
 {
@@ -12,28 +13,20 @@ namespace IssuesAPI.Repositories
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly JwtReceiver _jwtReceiver;
 
-        public ReviewRepository(ApplicationDbContext dbContext, ILogger logger, IHttpContextAccessor httpContextAccessor)
+        public ReviewRepository(ApplicationDbContext dbContext, ILogger logger, JwtReceiver jwtReceiver)
         {
            
             _dbContext = dbContext;
             _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
+            _jwtReceiver = jwtReceiver;
         }
 
         public async Task<CreateReviewDto> CreateReviewAsync(CreateReviewDto Createdreview)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
-            var username = user?.FindFirst(ClaimTypes.Name)?.Value
-                                      ?? user?.FindFirst("unique_name")?.Value;
-
-
             //create a new review using the CreateReviewDto
-            var review = ReviewsMapper.MapToReviewFromCreate(Createdreview, username);
+            var review = ReviewsMapper.MapToReviewFromCreate(Createdreview, _jwtReceiver.Username);
             await _dbContext.Reviews.AddAsync(review);
             await _dbContext.SaveChangesAsync();
             // Log the successful creation
@@ -52,6 +45,13 @@ namespace IssuesAPI.Repositories
                 {
                     throw new Exception($"No reviews found for issue with ID {issueId}.");
                 }
+                // Check only Moderator is authorized to delete these reviews
+                if (_jwtReceiver.Role != "Moderator")
+                {
+                    // Log the unauthorized deletion attempt
+                    _logger.LogWarning($"User {_jwtReceiver.Username} attempted to delete reviews for issue {issueId} without proper authorization.");
+                    throw new UnauthorizedAccessException("Only moderators can delete all reviews for an issue.");
+                }
                 _dbContext.Reviews.RemoveRange(reviewsToDelete);
                 await _dbContext.SaveChangesAsync();
                 return true;
@@ -66,12 +66,7 @@ namespace IssuesAPI.Repositories
 
         public async Task<bool> DeleteReviewByIdAsync(int reviewId)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
-            var username = user?.FindFirst(ClaimTypes.Name)?.Value
-                                      ?? user?.FindFirst("unique_name")?.Value;
+            
             try
             {
                 var exist = await _dbContext.Reviews.FirstOrDefaultAsync(x => x.Id == reviewId);
@@ -79,7 +74,7 @@ namespace IssuesAPI.Repositories
                 {
                     throw new Exception($"Review with ID {reviewId} not found.");
                 }
-                if (exist.ReviewerName == username || role == "Moderator")
+                if (exist.ReviewerName == _jwtReceiver.Username || _jwtReceiver.Role== "Moderator")
                 {
                     _dbContext.Reviews.Remove(exist);
                     await _dbContext.SaveChangesAsync();
@@ -90,7 +85,7 @@ namespace IssuesAPI.Repositories
                 else
                 {
                     // Log the unauthorized deletion attempt
-                    _logger.LogWarning($"User {username} attempted to delete a review they do not own (ID: {reviewId}).");
+                    _logger.LogWarning($"User {_jwtReceiver.Username} attempted to delete a review they do not own (ID: {reviewId}).");
                     throw new UnauthorizedAccessException("You can only delete your own reviews.");
                 }
 
@@ -139,6 +134,13 @@ namespace IssuesAPI.Repositories
             if (review == null)
             {
                 throw new Exception($"Review with ID {reviewId} not found.");
+            }
+            // Check if the user is authorized to update the review
+            if (review.ReviewerName != _jwtReceiver.Username && _jwtReceiver.Role != "Moderator")
+            {
+                // Log the unauthorized update attempt
+                _logger.LogWarning($"User {_jwtReceiver.Username} attempted to update a review they do not own (ID: {reviewId}).");
+                throw new UnauthorizedAccessException("You can only update your own reviews.");
             }
             //update the comment and/or rating
             if (updatedReviewDto.Comment != null)

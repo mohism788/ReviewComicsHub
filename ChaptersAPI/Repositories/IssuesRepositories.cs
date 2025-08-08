@@ -3,6 +3,7 @@ using ChaptersAPI.Models;
 using IssuesAPI.DataAccess;
 using IssuesAPI.DTOs.IssuesDTOs;
 using IssuesAPI.DTOs.ReviewsDTOs;
+using IssuesAPI.Helpers;
 using IssuesAPI.Mapper.IssuesMapper;
 using IssuesAPI.Mapper.ReviewsMapper;
 using IssuesAPI.Models;
@@ -15,24 +16,26 @@ namespace IssuesAPI.Repositories
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly JwtReceiver _jwtReceiver;
 
-        public IssuesRepositories(ApplicationDbContext dbContext, ILogger logger, IHttpContextAccessor  httpContextAccessor)
+        public IssuesRepositories(ApplicationDbContext dbContext, ILogger logger,JwtReceiver jwtReceiver)
         {
             _dbContext = dbContext;
             _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
+            _jwtReceiver = jwtReceiver;
         }
 
         public async Task<CreateIssueDto> CreateIssueAsync(CreateIssueDto createIssueDto)
         {
-           if (createIssueDto != null)
+            if (_jwtReceiver.Role != "Moderator")
             {
-                var user = _httpContextAccessor.HttpContext?.User;
-                var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
-
+                // Log the unauthorized update attempt
+                _logger.LogWarning($"User {_jwtReceiver.Username} attempted to Create an issue without proper authorization.");
+                throw new UnauthorizedAccessException("Only Moderators has the authority to Create issues");
+            }
+            if (createIssueDto != null)
+            {
+                
                 var issue = IssuesMapper.MapToIssueFromCreate(createIssueDto);
                 await _dbContext.Issues.AddAsync(issue);
                 await _dbContext.SaveChangesAsync();
@@ -48,10 +51,12 @@ namespace IssuesAPI.Repositories
         {
             try
             {
-                var user = _httpContextAccessor.HttpContext?.User;
-                var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-                var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+                if (_jwtReceiver.Role != "Moderator")
+                {
+                    // Log the unauthorized update attempt
+                    _logger.LogWarning($"User {_jwtReceiver.Username} attempted to Create an issue without proper authorization..");
+                    throw new UnauthorizedAccessException("Only Moderators has the authority to delete issues");
+                }
 
                 var ToBeDeletedIssues = await _dbContext.Issues.Where(x => x.ComicId == comicId).ToListAsync();
                 if (ToBeDeletedIssues == null || !ToBeDeletedIssues.Any())
@@ -83,10 +88,12 @@ namespace IssuesAPI.Repositories
 
         public async Task<bool> DeleteIssueByIdAsync(int issueId)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+            if (_jwtReceiver.Role != "Moderator")
+            {
+                // Log the unauthorized update attempt
+                _logger.LogWarning($"User {_jwtReceiver.Username} attempted to Create an issue without proper authorization..");
+                throw new UnauthorizedAccessException("Only Moderators has the authority to delete issues");
+            }
 
             var ToBeDeleted = await _dbContext.Issues.Where(x => x.Id == issueId).FirstOrDefaultAsync();
             if (ToBeDeleted == null)
@@ -109,11 +116,7 @@ namespace IssuesAPI.Repositories
 
         public async Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId, string? filterQuery, int pageNumber, int pageSize)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
-
+            
             var exist = await _dbContext.Issues.FirstOrDefaultAsync(x => x.ComicId == comicId);
             if (exist == null)
             {
@@ -148,10 +151,12 @@ namespace IssuesAPI.Repositories
 
         public async Task<IssueDto> UpdateIssueAsync(int issueId, UpdateIssueNameOrNumberDto updateIssueNameOrNumberDto)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+            if (_jwtReceiver.Role != "Moderator")
+            {
+                // Log the unauthorized update attempt
+                _logger.LogWarning($"User {_jwtReceiver.Username} attempted to Update an issue without proper authorization..");
+                throw new UnauthorizedAccessException("Only Moderators has the authority to update issues");
+            }
 
             var exist = _dbContext.Issues.FirstOrDefault(x => x.Id == issueId);
             if (exist == null)
