@@ -43,7 +43,7 @@ The solution is composed of multiple APIs:
 
 | Role       | Permissions                                           |
 |------------|--------------------------------------------------------|
-| User       | Add/view issues, add/delete own reviews               |
+| User       | view issues, add/delete own reviews                   |
 | Moderator  | Delete any review, issue, or comic                    |
 
 
