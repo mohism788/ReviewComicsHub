@@ -4,6 +4,7 @@ using IssuesAPI.DTOs.ReviewsDTOs;
 using IssuesAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using IssuesAPI.Mapper.ReviewsMapper;
+using System.Security.Claims;
 
 namespace IssuesAPI.Repositories
 {
@@ -11,18 +12,28 @@ namespace IssuesAPI.Repositories
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ReviewRepository(ApplicationDbContext dbContext, ILogger logger)
+        public ReviewRepository(ApplicationDbContext dbContext, ILogger logger, IHttpContextAccessor httpContextAccessor)
         {
            
             _dbContext = dbContext;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<CreateReviewDto> CreateReviewAsync(CreateReviewDto Createdreview)
         {
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+            var username = user?.FindFirst(ClaimTypes.Name)?.Value
+                                      ?? user?.FindFirst("unique_name")?.Value;
+
+
             //create a new review using the CreateReviewDto
-            var review = ReviewsMapper.MapToReviewFromCreate(Createdreview);
+            var review = ReviewsMapper.MapToReviewFromCreate(Createdreview, username);
             await _dbContext.Reviews.AddAsync(review);
             await _dbContext.SaveChangesAsync();
             // Log the successful creation
@@ -33,6 +44,7 @@ namespace IssuesAPI.Repositories
 
         public async Task<bool> DeleteAllReviewsByIssueIdAsync(int issueId)
         {
+
             try
             {
                 var reviewsToDelete = await _dbContext.Reviews.Where(x => x.IssueId == issueId).ToListAsync();
@@ -54,6 +66,12 @@ namespace IssuesAPI.Repositories
 
         public async Task<bool> DeleteReviewByIdAsync(int reviewId)
         {
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+            var username = user?.FindFirst(ClaimTypes.Name)?.Value
+                                      ?? user?.FindFirst("unique_name")?.Value;
             try
             {
                 var exist = await _dbContext.Reviews.FirstOrDefaultAsync(x => x.Id == reviewId);
@@ -61,11 +79,22 @@ namespace IssuesAPI.Repositories
                 {
                     throw new Exception($"Review with ID {reviewId} not found.");
                 }
-                _dbContext.Reviews.Remove(exist);
-                await _dbContext.SaveChangesAsync();
-                // Log the successful deletion
-                _logger.LogInformation($"Review with ID {reviewId} deleted successfully.");
-                return true;
+                if (exist.ReviewerName == username || role == "Moderator")
+                {
+                    _dbContext.Reviews.Remove(exist);
+                    await _dbContext.SaveChangesAsync();
+                    // Log the successful deletion
+                    _logger.LogInformation($"Review with ID {reviewId} deleted successfully.");
+                    return true;
+                }
+                else
+                {
+                    // Log the unauthorized deletion attempt
+                    _logger.LogWarning($"User {username} attempted to delete a review they do not own (ID: {reviewId}).");
+                    throw new UnauthorizedAccessException("You can only delete your own reviews.");
+                }
+
+
             }
             catch (Exception)
             {

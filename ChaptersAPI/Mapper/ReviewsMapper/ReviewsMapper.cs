@@ -26,7 +26,7 @@ namespace IssuesAPI.Mapper.ReviewsMapper
 
 
         //map CreateReviewDto to Review
-        public static Review MapToReviewFromCreate(CreateReviewDto createReviewDto)
+        public static Review MapToReviewFromCreate(CreateReviewDto createReviewDto, string username)
         {
             if (createReviewDto == null)
             {
@@ -38,7 +38,7 @@ namespace IssuesAPI.Mapper.ReviewsMapper
                 IssueId = createReviewDto.IssueId,
                 Rating = createReviewDto.Rating,
                 Comment = createReviewDto.Comment,
-                ReviewerName = createReviewDto.ReviewerName,
+                ReviewerName = username,
                 Date = DateTime.UtcNow // Set the date to the current UTC time
             };
         }

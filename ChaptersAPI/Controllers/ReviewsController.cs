@@ -59,7 +59,7 @@ namespace IssuesAPI.Controllers
         }
 
 
-        [Authorize(Roles = "Moderator")]
+        [Authorize]
         [HttpDelete]
         [Route("{reviewId:int}")]
         public async Task<IActionResult> DeleteReviewById([FromRoute] int reviewId)
