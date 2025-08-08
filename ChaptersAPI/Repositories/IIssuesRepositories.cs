@@ -5,7 +5,7 @@ namespace IssuesAPI.Repositories
 {
     public interface IIssuesRepositories
     {
-        Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId);
+        Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId, string filterQuery, int pageNumber, int pageSize);
         Task<IssueDto> UpdateIssueAsync(int issueId, UpdateIssueNameOrNumberDto updateIssueNameOrNumberDto);
 
         Task<bool> DeleteIssueByIdAsync(int issueId);

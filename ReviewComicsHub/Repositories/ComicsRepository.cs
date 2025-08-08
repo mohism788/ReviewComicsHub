@@ -75,7 +75,7 @@ namespace ComicsAPI.Repositories
             if (pageSize < 1)
             {
                 pageSize= 30; // Default to first page
-                _logger.LogWarning("Invalid pageNumber {Original} detected, defaulting to 1.", pageNumber);
+                _logger.LogWarning("Invalid pageSize {Original} detected, defaulting to 30.", pageSize);
             }
 
             var skipResults = (pageNumber - 1) * pageSize;

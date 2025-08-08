@@ -20,11 +20,12 @@ namespace ChaptersAPI.Controllers
 
         [HttpGet("{comicId}")]
         [Authorize]
-        public async Task<IActionResult> GetAllIssues(int comicId)
+        public async Task<IActionResult> GetAllIssues(int comicId, [FromQuery]string? filterQuery
+                                                                 , [FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
             try
             {
-                var issuesDomain = await _issuesRepo.GetAllIssuesAsync(comicId);
+                var issuesDomain = await _issuesRepo.GetAllIssuesAsync(comicId, filterQuery,pageNumber, pageSize);
                 if (issuesDomain == null || !issuesDomain.Any())
                 {
                     return NotFound($"No issues found for comic with ID {comicId}.");

@@ -107,7 +107,7 @@ namespace IssuesAPI.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId)
+        public async Task<IEnumerable<IssueDto>> GetAllIssuesAsync(int comicId, string? filterQuery, int pageNumber, int pageSize)
         {
             var user = _httpContextAccessor.HttpContext?.User;
             var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -120,9 +120,19 @@ namespace IssuesAPI.Repositories
                 throw new Exception("Comic not found");
             }
 
-            var issues = await _dbContext.Issues
+            var issues = _dbContext.Issues
                 .Where(x => x.ComicId == comicId)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filterQuery))
+            {
+                issues = issues.Where(x => x.IssueTitle.Contains(filterQuery) || x.IssueNumber.ToString().Contains(filterQuery));
+
+            }
+
+            var skipResults = (pageNumber - 1) * pageSize;
+
+           // var queryIssues= await issues.ToListAsync();
 
             //get ReviewWithIssueTitleDto for each issue
             var reviews = await _dbContext.Reviews
@@ -132,8 +142,8 @@ namespace IssuesAPI.Repositories
             var result = IssuesMapper.MapListToDtoWithReviews(issues, reviews);
             //log 
             _logger.LogInformation($"Found {result.Count()} issues for comic with ID {comicId}.");
-
-            return result;
+            
+            return result.Skip(skipResults).Take(pageSize);
         }
 
         public async Task<IssueDto> UpdateIssueAsync(int issueId, UpdateIssueNameOrNumberDto updateIssueNameOrNumberDto)
