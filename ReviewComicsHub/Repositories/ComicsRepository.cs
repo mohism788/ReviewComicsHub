@@ -52,13 +52,35 @@ namespace ComicsAPI.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<Comics>> GetAllComicsAsync()
+        public async Task<IEnumerable<Comics>> GetAllComicsAsync(string? filterQuery, int pageSize = 30 , int pageNumber = 1)
         {
             // Log the start of the method execution
             _logger.LogInformation("Fetching all comics from the database.");
             // Fetch all comics from the database
             _logger.LogInformation("Successfully fetched all comics from the database.");
-            return await _dbContext.Comics.ToListAsync();
+            var comics = _dbContext.Comics.AsQueryable();
+
+
+            if (string.IsNullOrWhiteSpace(filterQuery) == false)
+            {
+                    comics = comics.Where(x => x.Title.Contains(filterQuery));
+                
+                
+            }
+            if (pageNumber < 1)
+            {
+                pageNumber = 1; // Default to first page
+                _logger.LogWarning("Invalid pageNumber {Original} detected, defaulting to 1.", pageNumber);
+            }
+            if (pageSize < 1)
+            {
+                pageSize= 30; // Default to first page
+                _logger.LogWarning("Invalid pageNumber {Original} detected, defaulting to 1.", pageNumber);
+            }
+
+            var skipResults = (pageNumber - 1) * pageSize;
+
+            return await comics.Skip(skipResults).Take(pageSize).ToListAsync();
         }
 
         public async Task<ComicWithIssuesDto> GetComicIssuesAsync(int comicId)

@@ -20,9 +20,9 @@ namespace ComicsAPI.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetAllComics()
+        public async Task<IActionResult> GetAllComics([FromQuery] string? filterQuery, [FromQuery] int pageSize, [FromQuery] int pageNumber)
         {
-            var ComicsDomain = await _comicsRepo.GetAllComicsAsync();
+            var ComicsDomain = await _comicsRepo.GetAllComicsAsync(filterQuery, pageSize, pageNumber);
 
             var ComicsDto = ComicsDomain.Select(comic => ComicMapper.MapToDto(comic)).ToList();
 
