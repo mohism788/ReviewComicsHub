@@ -8,7 +8,8 @@ Comic Review Hub is a modular ASP.NET Core Web API solution built to manage comi
 
 The solution is composed of multiple APIs:
 
-- **ComicsAPI** – Manages comic entries and user authentication
+- **UsersAPI** - Manages user authentication, passes token to other APIs 
+- **ComicsAPI** – Manages comic entries
 - **IssuesAPI** – Handles comic issues and associated reviews
 
 ---
