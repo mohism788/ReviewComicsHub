@@ -1,0 +1,14 @@
+﻿using ComicsAPI_V2.DTOs;
+
+namespace ComicsAPI_V2.Models
+{
+    public class Comics
+    {
+        //make a primary key named ComicId
+        public int ComicId { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string? CoverImageUrl { get; set; }
+        public ICollection<IssueDto> Issues { get; set; } = new List<IssueDto>();
+    }
+}

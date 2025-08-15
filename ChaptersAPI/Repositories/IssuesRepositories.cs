@@ -33,6 +33,12 @@ namespace IssuesAPI.Repositories
                 _logger.LogWarning($"User {_jwtReceiver.Username} attempted to Create an issue without proper authorization.");
                 throw new UnauthorizedAccessException("Only Moderators has the authority to Create issues");
             }
+            var existIssue = await _dbContext.Issues.AnyAsync(x => x.IssueNumber == createIssueDto.IssueNumber && x.ComicId == createIssueDto.ComicId);
+            if (existIssue == true)
+            {
+                _logger.LogError($"Issue with number {createIssueDto.IssueNumber} already exists.");
+                throw new Exception("Issue with this number already exists");
+            }
             if (createIssueDto != null)
             {
                 
@@ -133,9 +139,10 @@ namespace IssuesAPI.Repositories
 
             }
 
-            var skipResults = (pageNumber - 1) * pageSize;
+           
+           
 
-           // var queryIssues= await issues.ToListAsync();
+            // var queryIssues= await issues.ToListAsync();
 
             //get ReviewWithIssueTitleDto for each issue
             var reviews = await _dbContext.Reviews
@@ -145,7 +152,17 @@ namespace IssuesAPI.Repositories
             var result = IssuesMapper.MapListToDtoWithReviews(issues, reviews);
             //log 
             _logger.LogInformation($"Found {result.Count()} issues for comic with ID {comicId}.");
-            
+
+            if (pageNumber <= 0)
+            {
+                pageNumber = 1; // Default to first page if invalid page number
+            }
+            if (pageSize <= 0)
+            {
+                pageSize = 100; // Default to 10 items per page if invalid page size
+            }
+            var skipResults = (pageNumber - 1) * pageSize;
+
             return result.Skip(skipResults).Take(pageSize);
         }
 
